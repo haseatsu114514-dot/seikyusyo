@@ -20,6 +20,10 @@
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -622,13 +626,33 @@ h1 {
   margin-bottom: 18px;
 }
 
+.invoice-template-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.field-note {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.pdf-filename-hint {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .invoice-item-builder {
   padding-top: 4px;
 }
 
 .invoice-item-add {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 92px auto;
+  grid-template-columns: minmax(0, 1fr) 82px 120px auto;
   gap: 8px;
 }
 
@@ -806,6 +830,165 @@ h1 {
   font-size: 12px;
   line-height: 1.6;
   white-space: pre-line;
+}
+
+.spreadsheet-invoice-paper {
+  padding: 34px 38px;
+  font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+}
+
+.spreadsheet-invoice-title {
+  margin-bottom: 24px;
+  letter-spacing: 0.3em;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
+.spreadsheet-invoice-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  gap: 28px;
+  min-height: 124px;
+}
+
+.spreadsheet-recipient-block {
+  align-self: start;
+  padding-top: 8px;
+}
+
+.spreadsheet-recipient-company,
+.spreadsheet-recipient-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.spreadsheet-recipient-name {
+  display: inline-block;
+  margin-top: 5px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #111;
+}
+
+.spreadsheet-issue-block {
+  display: grid;
+  gap: 3px;
+  font-size: 10px;
+}
+
+.spreadsheet-issue-block div {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.spreadsheet-issue-block strong {
+  overflow-wrap: anywhere;
+}
+
+.spreadsheet-invoice-message {
+  margin: 0 0 10px;
+  font-size: 11px;
+}
+
+.spreadsheet-billing-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 28px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.spreadsheet-total-claim {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  border-bottom: 2px solid #111;
+  padding: 6px 4px;
+  font-size: 11px;
+}
+
+.spreadsheet-total-claim strong {
+  text-align: right;
+  font-size: 18px;
+}
+
+.spreadsheet-due-date {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  border-bottom: 1px solid #111;
+  padding: 6px 4px;
+  font-size: 11px;
+}
+
+.spreadsheet-due-date strong {
+  text-align: right;
+}
+
+.spreadsheet-invoice-table {
+  table-layout: fixed;
+  margin-top: 0;
+  font-size: 9px;
+}
+
+.spreadsheet-invoice-table th,
+.spreadsheet-invoice-table td {
+  height: 18px;
+  padding: 2px 4px;
+  border-color: #333;
+}
+
+.spreadsheet-invoice-table th {
+  background: #fff;
+}
+
+.spreadsheet-invoice-table th:nth-child(1) { width: 34px; }
+.spreadsheet-invoice-table th:nth-child(2) { width: 32%; }
+.spreadsheet-invoice-table th:nth-child(3) { width: 46px; }
+.spreadsheet-invoice-table th:nth-child(4) { width: 46px; }
+.spreadsheet-invoice-table th:nth-child(5) { width: 82px; }
+.spreadsheet-invoice-table th:nth-child(6) { width: 88px; }
+
+.spreadsheet-invoice-table td:first-child,
+.spreadsheet-invoice-table td:nth-child(3),
+.spreadsheet-invoice-table td:nth-child(4) {
+  text-align: center;
+}
+
+.spreadsheet-invoice-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 245px;
+  gap: 22px;
+  margin-top: 10px;
+  font-size: 10px;
+}
+
+.spreadsheet-bank-block {
+  display: grid;
+  gap: 3px;
+}
+
+.spreadsheet-grand-total {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  align-self: start;
+  border: 1px solid #333;
+}
+
+.spreadsheet-grand-total span,
+.spreadsheet-grand-total strong {
+  padding: 7px 8px;
+}
+
+.spreadsheet-grand-total span {
+  border-right: 1px solid #333;
+  text-align: center;
+}
+
+.spreadsheet-grand-total strong {
+  text-align: right;
 }
 
 .toast {
