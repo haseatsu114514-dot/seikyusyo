@@ -8,6 +8,10 @@ const STATUSES = [
 ];
 
 const EXPENSE_CATEGORIES = ["ソフトウェア", "素材", "外注費", "交通費", "通信費", "備品", "広告費", "その他"];
+const LEGACY_DEMO_CLIENT_IDS = new Set(["client-techbase", "client-bloom", "client-cafe"]);
+const LEGACY_DEMO_ISSUER_IDS = new Set(["issuer-test"]);
+const LEGACY_DEMO_PROJECT_IDS = new Set(Array.from({ length: 13 }, (_, index) => `p-${String(index + 1).padStart(3, "0")}`));
+const LEGACY_DEMO_EXPENSE_IDS = new Set(Array.from({ length: 4 }, (_, index) => `e-${String(index + 1).padStart(3, "0")}`));
 
 const seedState = {
   selectedMonth: getCurrentMonthInput(),
@@ -42,36 +46,6 @@ const seedState = {
       defaultInvoiceTemplateId: "template-suzuki-sheet",
       defaultDiscountRate: 0,
     },
-    {
-      id: "client-techbase",
-      name: "TechBase (YouTubeチャンネル)",
-      shortName: "TechBase",
-      postal: "222-2222",
-      address: "愛知県名古屋市名古屋区",
-      contact: "編集部",
-      email: "team@techbase.example",
-      registration: "",
-    },
-    {
-      id: "client-bloom",
-      name: "株式会社ブルームメディア",
-      shortName: "ブルームメディア",
-      postal: "100-0006",
-      address: "東京都千代田区有楽町1-1-1",
-      contact: "制作担当",
-      email: "creative@bloom.example",
-      registration: "",
-    },
-    {
-      id: "client-cafe",
-      name: "カフェ・ド・ルミエール",
-      shortName: "ルミエール",
-      postal: "150-0013",
-      address: "東京都渋谷区恵比寿2-2-2",
-      contact: "店長",
-      email: "info@lumiere.example",
-      registration: "",
-    },
   ],
   issuerProfiles: [
     {
@@ -88,21 +62,6 @@ const seedState = {
       bankType: "普通預金",
       bankNumber: "8580887",
       bankHolder: "ハセガワアツキ",
-    },
-    {
-      id: "issuer-test",
-      name: "合同会社テスト",
-      postal: "222-2222",
-      address: "愛知県名古屋市名古屋区",
-      phone: "",
-      registration: "T123123123",
-      bankName: "三井住友銀行",
-      bankCode: "",
-      bankBranch: "テスト支店",
-      branchCode: "",
-      bankType: "普通",
-      bankNumber: "1234565",
-      bankHolder: "ドウガヘンシュウ",
     },
   ],
   itemPresets: [
@@ -152,175 +111,8 @@ const seedState = {
       localTemplatePath: "./templates/suzuki-invoice-template.xlsx",
     },
   ],
-  projects: [
-    {
-      id: "p-001",
-      clientId: "client-bloom",
-      title: "採用ブランディング動画 #03",
-      dueDate: "2026-06-28",
-      status: "accepted",
-      amount: 80000,
-      note: "素材リンク: Drive / bloom_recruit_03",
-    },
-    {
-      id: "p-002",
-      clientId: "client-cafe",
-      title: "夏季限定メニュー紹介リール",
-      dueDate: "2026-06-30",
-      status: "accepted",
-      amount: 27000,
-      note: "15秒、縦型、BGM差し替えあり",
-    },
-    {
-      id: "p-003",
-      clientId: "client-techbase",
-      title: "新型スマホ実機レビュー #58",
-      dueDate: "2026-07-02",
-      status: "accepted",
-      amount: 35000,
-      note: "テロップ多め",
-    },
-    {
-      id: "p-004",
-      clientId: "client-techbase",
-      title: "ガジェット比較企画 前編",
-      dueDate: "2026-06-16",
-      status: "editing",
-      amount: 38000,
-      note: "比較表を画面右下に追加",
-    },
-    {
-      id: "p-005",
-      clientId: "client-bloom",
-      title: "会社紹介ムービー リニューアル",
-      dueDate: "2026-06-19",
-      status: "editing",
-      amount: 65000,
-      note: "旧動画の構成をベースに尺を短縮",
-    },
-    {
-      id: "p-006",
-      clientId: "client-cafe",
-      title: "店舗紹介 ショート動画",
-      dueDate: "2026-06-23",
-      status: "editing",
-      amount: 22000,
-      note: "ナレーションなし",
-    },
-    {
-      id: "p-007",
-      clientId: "client-techbase",
-      title: "開封動画 ワイヤレスイヤホン",
-      dueDate: "2026-06-02",
-      status: "delivered",
-      amount: 30000,
-      note: "納品済み",
-    },
-    {
-      id: "p-008",
-      clientId: "client-bloom",
-      title: "展示会用ループ動画",
-      dueDate: "2026-06-04",
-      status: "delivered",
-      amount: 50000,
-      note: "会場ディスプレイ用",
-    },
-    {
-      id: "p-009",
-      clientId: "client-cafe",
-      title: "新店オープン告知動画",
-      dueDate: "2026-06-06",
-      status: "delivered",
-      amount: 44000,
-      note: "SNS用",
-    },
-    {
-      id: "p-010",
-      clientId: "client-techbase",
-      title: "月間ベストバイ 5月版",
-      dueDate: "2026-06-08",
-      status: "delivered",
-      amount: 35000,
-      note: "サムネ用カット含む",
-    },
-    {
-      id: "p-011",
-      clientId: "client-techbase",
-      title: "視聴者Q&A 6月号",
-      dueDate: "2026-06-14",
-      status: "delivered",
-      amount: 30000,
-      note: "質問リスト反映済み",
-    },
-    {
-      id: "p-012",
-      clientId: "client-bloom",
-      title: "社員インタビュー 第4回",
-      dueDate: "2026-06-15",
-      status: "delivered",
-      amount: 45000,
-      note: "字幕チェック済み",
-    },
-    {
-      id: "p-013",
-      clientId: "client-cafe",
-      title: "バリスタ密着 Vlog",
-      dueDate: "2026-06-17",
-      status: "delivered",
-      amount: 33000,
-      note: "店内BGM差し替え",
-    },
-  ],
-  expenses: [
-    {
-      id: "e-001",
-      date: "2026-06-03",
-      category: "ソフトウェア",
-      title: "クラウドストレージ",
-      vendor: "Storage Pro",
-      amount: 1280,
-      memo: "素材共有用",
-    },
-    {
-      id: "e-002",
-      date: "2026-06-08",
-      category: "素材",
-      title: "BGM・効果音ライセンス",
-      vendor: "Audio Market",
-      amount: 3300,
-      memo: "6月納品分",
-    },
-    {
-      id: "e-003",
-      date: "2026-06-12",
-      category: "外注費",
-      title: "字幕チェック",
-      vendor: "校正パートナー",
-      amount: 22000,
-      memo: "社員インタビュー 第4回",
-    },
-    {
-      id: "e-004",
-      date: "2026-06-18",
-      category: "交通費",
-      title: "撮影移動",
-      vendor: "JR",
-      amount: 1460,
-      memo: "店舗紹介 ショート動画",
-    },
-  ],
-  settings: {
-    issuerName: "合同会社テスト",
-    issuerPostal: "222-2222",
-    issuerAddress: "愛知県名古屋市名古屋区",
-    issuerRegistration: "T123123123",
-    bankName: "三井住友銀行",
-    bankBranch: "テスト支店",
-    bankType: "普通",
-    bankNumber: "1234565",
-    bankHolder: "ドウガヘンシュウ",
-    defaultDueDays: 30,
-  },
+  projects: [],
+  expenses: [],
 };
 
 let state = loadState();
@@ -357,8 +149,14 @@ function loadState() {
       ...structuredClone(seedState),
       ...parsed,
       selectedMonth: parsed.selectedMonth || seedState.selectedMonth,
-      clients: mergeById(seedState.clients, parsed.clients),
-      issuerProfiles: mergeById(seedState.issuerProfiles, parsed.issuerProfiles),
+      clients: mergeById(
+        seedState.clients,
+        Array.isArray(parsed.clients) ? parsed.clients.filter((client) => !LEGACY_DEMO_CLIENT_IDS.has(client.id)) : [],
+      ),
+      issuerProfiles: mergeById(
+        seedState.issuerProfiles,
+        Array.isArray(parsed.issuerProfiles) ? parsed.issuerProfiles.filter((issuer) => !LEGACY_DEMO_ISSUER_IDS.has(issuer.id)) : [],
+      ),
       itemPresets: mergeById(seedState.itemPresets, parsed.itemPresets)
         .filter((item) => item.id !== "item-video-editing")
         .map((item) => (
@@ -367,9 +165,13 @@ function loadState() {
             : item
         )),
       invoiceTemplates: mergeById(seedState.invoiceTemplates, parsed.invoiceTemplates),
-      projects: Array.isArray(parsed.projects) ? parsed.projects : seedState.projects,
-      expenses: Array.isArray(parsed.expenses) ? parsed.expenses : seedState.expenses,
-      settings: { ...seedState.settings, ...(parsed.settings || {}) },
+      projects: Array.isArray(parsed.projects)
+        ? parsed.projects.filter((project) => !LEGACY_DEMO_PROJECT_IDS.has(project.id))
+        : [],
+      expenses: Array.isArray(parsed.expenses)
+        ? parsed.expenses.filter((expense) => !LEGACY_DEMO_EXPENSE_IDS.has(expense.id))
+        : [],
+      settings: {},
     };
   } catch {
     return structuredClone(seedState);
