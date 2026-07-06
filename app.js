@@ -129,7 +129,7 @@ const seedState = {
     },
     {
       id: "item-bb",
-      name: "事務作業 B",
+      name: "事務作業B",
       unit: "件",
       unitPrice: 150,
       description: "",
@@ -360,7 +360,12 @@ function loadState() {
       clients: mergeById(seedState.clients, parsed.clients),
       issuerProfiles: mergeById(seedState.issuerProfiles, parsed.issuerProfiles),
       itemPresets: mergeById(seedState.itemPresets, parsed.itemPresets)
-        .filter((item) => item.id !== "item-video-editing"),
+        .filter((item) => item.id !== "item-video-editing")
+        .map((item) => (
+          item.id === "item-bb" && item.name === "事務作業 B"
+            ? { ...item, name: "事務作業B" }
+            : item
+        )),
       invoiceTemplates: mergeById(seedState.invoiceTemplates, parsed.invoiceTemplates),
       projects: Array.isArray(parsed.projects) ? parsed.projects : seedState.projects,
       expenses: Array.isArray(parsed.expenses) ? parsed.expenses : seedState.expenses,
