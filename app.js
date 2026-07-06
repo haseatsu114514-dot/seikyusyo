@@ -104,11 +104,69 @@ const seedState = {
     },
     {
       id: "template-suzuki-sheet",
-      name: "スズキさん用（共有シート雛形）",
+      name: "スズキ様用（共有シート雛形）",
       type: "suzukiSpreadsheet",
       spreadsheetId: "1VbXz5CbTipmvIixvmm2DWT881tNnQLlN",
       sourceUrl: "https://docs.google.com/spreadsheets/d/1VbXz5CbTipmvIixvmm2DWT881tNnQLlN/edit?gid=1240519593#gid=1240519593",
       localTemplatePath: "./templates/suzuki-invoice-template.xlsx",
+    },
+  ],
+  invoicePresets: [
+    {
+      id: "invoice-2026-06-kitakore-office",
+      name: "2026年6月 キタコレ（事務作業）",
+      targetMonth: "2026-06",
+      clientId: "client-kitakore",
+      issuerId: "issuer-hasegawa",
+      issueDate: "2026-06-10",
+      dueDate: "2026-07-20",
+      taxMode: "none",
+      withholdingMode: "enabled",
+      templateId: "template-standard",
+      discountRate: 2,
+      invoiceNo: "202606-01",
+      itemPresetId: "item-office-work-a",
+      manualItems: [
+        { id: "preset-202606-kitakore-a", name: "事務作業A", unit: "件", unitPrice: 50, quantity: 579, description: "" },
+        { id: "preset-202606-kitakore-b", name: "事務作業B", unit: "件", unitPrice: 150, quantity: 133, description: "" },
+        { id: "preset-202606-kitakore-communication", name: "通信費", unit: "式", unitPrice: 2790, quantity: 1, description: "" },
+      ],
+    },
+    {
+      id: "invoice-2026-06-kitakore-video",
+      name: "2026年6月 キタコレ（動画編集）",
+      targetMonth: "2026-06",
+      clientId: "client-kitakore",
+      issuerId: "issuer-hasegawa",
+      issueDate: "2026-06-10",
+      dueDate: "2026-07-20",
+      taxMode: "none",
+      withholdingMode: "enabled",
+      templateId: "template-standard",
+      discountRate: 2,
+      invoiceNo: "202606-02",
+      itemPresetId: "item-video-editing-variable",
+      manualItems: [
+        { id: "preset-202606-kitakore-video", name: "動画編集", unit: "式", unitPrice: 8000, quantity: 1, description: "" },
+      ],
+    },
+    {
+      id: "invoice-2026-06-lead-innovation",
+      name: "2026年6月 LeadInnovation（スズキサトミ様）",
+      targetMonth: "2026-06",
+      clientId: "client-lead-innovation",
+      issuerId: "issuer-hasegawa",
+      issueDate: "2026-06-10",
+      dueDate: "2026-07-20",
+      taxMode: "none",
+      withholdingMode: "none",
+      templateId: "template-suzuki-sheet",
+      discountRate: 0,
+      invoiceNo: "202606-03",
+      itemPresetId: "item-office-work-a",
+      manualItems: [
+        { id: "preset-202606-lead-a", name: "事務作業A", unit: "件", unitPrice: 50, quantity: 127, description: "" },
+      ],
     },
   ],
   projects: [],
@@ -165,6 +223,7 @@ function loadState() {
             : item
         )),
       invoiceTemplates: mergeById(seedState.invoiceTemplates, parsed.invoiceTemplates),
+      invoicePresets: mergeById(seedState.invoicePresets, parsed.invoicePresets),
       projects: Array.isArray(parsed.projects)
         ? parsed.projects.filter((project) => !LEGACY_DEMO_PROJECT_IDS.has(project.id))
         : [],
@@ -889,6 +948,17 @@ function openInvoiceModal() {
       <div class="modal-body">
         <div class="invoice-controls">
           <div class="field full">
+            <label for="invoice-preset">保存済み請求データ</label>
+            <div class="invoice-template-input">
+              <select id="invoice-preset">
+                <option value="">請求データを選択</option>
+                ${state.invoicePresets.map((preset) => option(preset.id, preset.name, "")).join("")}
+              </select>
+              <button class="btn" type="button" id="load-invoice-preset">読み込む</button>
+            </div>
+            <small class="field-note">6月分の件数・単価・特例支払期限をまとめて呼び出します。</small>
+          </div>
+          <div class="field full">
             <label for="invoice-template-url">共有スプレッドシートURL</label>
             <div class="invoice-template-input">
               <input id="invoice-template-url" type="url" value="${escapeAttr(getInvoiceTemplate(draft.templateId).sourceUrl || "")}" placeholder="https://docs.google.com/spreadsheets/d/..." />
@@ -1012,6 +1082,53 @@ function openInvoiceModal() {
     });
     refreshIcons();
   };
+
+  document.getElementById("load-invoice-preset").addEventListener("click", () => {
+    const presetId = document.getElementById("invoice-preset").value;
+    const preset = state.invoicePresets.find((item) => item.id === presetId);
+    if (!preset) {
+      showToast("請求データを選択してください");
+      return;
+    }
+
+    Object.assign(draft, {
+      targetMonth: preset.targetMonth,
+      clientId: preset.clientId,
+      issuerId: preset.issuerId,
+      issueDate: preset.issueDate,
+      dueDate: preset.dueDate,
+      taxMode: preset.taxMode,
+      withholdingMode: preset.withholdingMode,
+      templateId: preset.templateId,
+      discountRate: preset.discountRate,
+      invoiceNo: preset.invoiceNo,
+      manualItems: structuredClone(preset.manualItems),
+    });
+
+    const fields = {
+      "invoice-month": draft.targetMonth,
+      "invoice-client": draft.clientId,
+      "invoice-issuer": draft.issuerId,
+      "invoice-issue": draft.issueDate,
+      "invoice-due": draft.dueDate,
+      "invoice-tax": draft.taxMode,
+      "invoice-withholding": draft.withholdingMode,
+      "invoice-discount": draft.discountRate,
+      "invoice-no": draft.invoiceNo,
+      "invoice-template": draft.templateId,
+    };
+    Object.entries(fields).forEach(([id, value]) => {
+      document.getElementById(id).value = value;
+    });
+    document.getElementById("invoice-template-url").value = getInvoiceTemplate(draft.templateId).sourceUrl || "";
+    document.getElementById("invoice-item-preset").value = preset.itemPresetId;
+    const itemPreset = state.itemPresets.find((item) => item.id === preset.itemPresetId);
+    document.getElementById("invoice-item-unit-price").value = Number(itemPreset?.unitPrice || 0);
+
+    renderManualItems();
+    updatePreview();
+    showToast(`${preset.name}を読み込みました`);
+  });
 
   modalRoot.querySelectorAll("[data-invoice-field]").forEach((field) => {
     const syncField = () => {
@@ -1201,6 +1318,7 @@ function renderInvoicePaper(draft) {
 }
 
 function renderSuzukiSpreadsheetInvoice({ draft, client, issuer, items, discount, tax, withholding, total }) {
+  const recipientName = getRecipientNameWithHonorific(client.contact || client.name);
   const adjustmentItems = [
     discount > 0 ? { name: `値引（-${draft.discountRate}%）`, quantity: 1, unit: "式", unitPrice: -discount } : null,
     draft.taxMode === "external" && tax > 0 ? { name: "消費税（10%）", quantity: 1, unit: "式", unitPrice: tax } : null,
@@ -1230,7 +1348,7 @@ function renderSuzukiSpreadsheetInvoice({ draft, client, issuer, items, discount
       <div class="spreadsheet-invoice-top">
         <section class="spreadsheet-recipient-block">
           <p class="spreadsheet-recipient-company">${escapeHtml(client.name)}</p>
-          <p class="spreadsheet-recipient-name">${escapeHtml(client.contact || client.name)}　御中</p>
+          <p class="spreadsheet-recipient-name">${escapeHtml(recipientName)}御中</p>
         </section>
         <section class="spreadsheet-issue-block">
           <div><span>発行日</span><strong>${formatLongDate(draft.issueDate)}</strong></div>
@@ -1419,14 +1537,17 @@ async function exportSpreadsheetInvoice(draft) {
   const items = getInvoiceLineItems(draft);
   const totals = calculateInvoiceTotals(draft, items);
 
-  worksheet.getCell("B3").value = [client.name, client.contact].filter(Boolean).join("　");
+  worksheet.getCell("B3").value = [client.name, getRecipientNameWithHonorific(client.contact)].filter(Boolean).join("　");
+  worksheet.getCell("F3").value = "御中";
   worksheet.getCell("J3").value = new Date(`${draft.issueDate}T12:00:00`);
   worksheet.getCell("J4").value = issuer.registration || "-";
   worksheet.getCell("H6").value = `氏名：${issuer.name || ""}`;
   worksheet.getCell("H7").value = `郵便番号：${issuer.postal || ""}`;
   worksheet.getCell("H8").value = `住所：${issuer.address || ""}`;
+  worksheet.getCell("H8").font = { ...worksheet.getCell("H8").font, size: 8 };
   worksheet.getCell("H10").value = `TEL：${issuer.phone || ""}`;
   worksheet.getCell("D10").value = totals.total;
+  worksheet.getCell("D10").numFmt = '"¥"#,##0';
   worksheet.getCell("D12").value = new Date(`${draft.dueDate}T12:00:00`);
 
   for (let row = 15; row <= 37; row += 1) {
@@ -1436,7 +1557,10 @@ async function exportSpreadsheetInvoice(draft) {
     worksheet.getCell(`F${row}`).value = null;
     worksheet.getCell(`G${row}`).value = null;
     worksheet.getCell(`H${row}`).value = null;
+    worksheet.getCell(`I${row}`).value = null;
     worksheet.getCell(`J${row}`).value = null;
+    worksheet.getCell(`H${row}`).numFmt = "#,##0;-#,##0;;";
+    worksheet.getCell(`I${row}`).numFmt = "#,##0;-#,##0;;";
   }
 
   items.slice(0, 23).forEach((item, index) => {
@@ -1548,6 +1672,12 @@ function calculateWithholding(amount) {
 
 function getClient(clientId) {
   return state.clients.find((client) => client.id === clientId) || state.clients[0] || { id: "", name: "未設定" };
+}
+
+function getRecipientNameWithHonorific(value) {
+  const name = String(value || "").trim();
+  if (!name) return "";
+  return name.endsWith("様") ? name : `${name}様`;
 }
 
 function getIssuer(issuerId) {
