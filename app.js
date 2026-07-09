@@ -42,7 +42,7 @@ const seedState = {
       registration: "",
       defaultDueRule: "currentMonth20",
       defaultWithholdingMode: "none",
-      defaultItemPresetId: "item-office-work-a",
+      defaultItemPresetId: "item-office-work",
       defaultInvoiceTemplateId: "template-suzuki-sheet",
       defaultDiscountRate: 0,
     },
@@ -77,6 +77,13 @@ const seedState = {
       name: "動画修正",
       unit: "式",
       unitPrice: 0,
+      description: "",
+    },
+    {
+      id: "item-office-work",
+      name: "事務作業",
+      unit: "件",
+      unitPrice: 50,
       description: "",
     },
     {
@@ -156,16 +163,16 @@ const seedState = {
       targetMonth: "2026-06",
       clientId: "client-lead-innovation",
       issuerId: "issuer-hasegawa",
-      issueDate: "2026-06-10",
+      issueDate: "2026-07-01",
       dueDate: "2026-07-20",
       taxMode: "none",
       withholdingMode: "none",
       templateId: "template-suzuki-sheet",
       discountRate: 0,
       invoiceNo: "202606-03",
-      itemPresetId: "item-office-work-a",
+      itemPresetId: "item-office-work",
       manualItems: [
-        { id: "preset-202606-lead-a", name: "事務作業A", unit: "件", unitPrice: 50, quantity: 127, description: "" },
+        { id: "preset-202606-lead-a", name: "事務作業", unit: "件", unitPrice: 50, quantity: 127, description: "" },
       ],
     },
   ],
@@ -207,10 +214,10 @@ function loadState() {
       ...structuredClone(seedState),
       ...parsed,
       selectedMonth: parsed.selectedMonth || seedState.selectedMonth,
-      clients: mergeById(
+      clients: migrateClients(mergeById(
         seedState.clients,
         Array.isArray(parsed.clients) ? parsed.clients.filter((client) => !LEGACY_DEMO_CLIENT_IDS.has(client.id)) : [],
-      ),
+      )),
       issuerProfiles: mergeById(
         seedState.issuerProfiles,
         Array.isArray(parsed.issuerProfiles) ? parsed.issuerProfiles.filter((issuer) => !LEGACY_DEMO_ISSUER_IDS.has(issuer.id)) : [],
@@ -223,7 +230,7 @@ function loadState() {
             : item
         )),
       invoiceTemplates: mergeById(seedState.invoiceTemplates, parsed.invoiceTemplates),
-      invoicePresets: mergeById(seedState.invoicePresets, parsed.invoicePresets),
+      invoicePresets: migrateInvoicePresets(mergeById(seedState.invoicePresets, parsed.invoicePresets)),
       projects: Array.isArray(parsed.projects)
         ? parsed.projects.filter((project) => !LEGACY_DEMO_PROJECT_IDS.has(project.id))
         : [],
@@ -1318,7 +1325,8 @@ function renderInvoicePaper(draft) {
 }
 
 function renderSuzukiSpreadsheetInvoice({ draft, client, issuer, items, discount, tax, withholding, total }) {
-  const recipientName = getRecipientNameWithHonorific(client.contact || client.name);
+  const recipientName = getSuzukiSpreadsheetRecipientName(client);
+  const bankBranch = [issuer.bankBranch, issuer.branchCode ? `（${issuer.branchCode}）` : ""].filter(Boolean).join("");
   const adjustmentItems = [
     discount > 0 ? { name: `値引（-${draft.discountRate}%）`, quantity: 1, unit: "式", unitPrice: -discount } : null,
     draft.taxMode === "external" && tax > 0 ? { name: "消費税（10%）", quantity: 1, unit: "式", unitPrice: tax } : null,
@@ -1347,8 +1355,7 @@ function renderSuzukiSpreadsheetInvoice({ draft, client, issuer, items, discount
 
       <div class="spreadsheet-invoice-top">
         <section class="spreadsheet-recipient-block">
-          <p class="spreadsheet-recipient-company">${escapeHtml(client.name)}</p>
-          <p class="spreadsheet-recipient-name">${escapeHtml(recipientName)}御中</p>
+          <p class="spreadsheet-recipient-name">${escapeHtml(recipientName)}</p>
         </section>
         <section class="spreadsheet-issue-block">
           <div><span>発行日</span><strong>${formatLongDate(draft.issueDate)}</strong></div>
@@ -1392,9 +1399,9 @@ function renderSuzukiSpreadsheetInvoice({ draft, client, issuer, items, discount
       <div class="spreadsheet-invoice-footer">
         <section class="spreadsheet-bank-block">
           <strong>[振込先]</strong>
-          <div>${escapeHtml(issuer.bankName || "")}　${escapeHtml(issuer.bankBranch || "")}</div>
-          <div>${escapeHtml(issuer.bankType || "普通")}　口座番号 ${escapeHtml(issuer.bankNumber || "")}</div>
-          <div>名義　${escapeHtml(issuer.bankHolder || "")}</div>
+          <div>銀行名：${escapeHtml(issuer.bankName || "")}　${escapeHtml(bankBranch)}</div>
+          <div>口座番号：${escapeHtml(issuer.bankType || "普通預金")}　${escapeHtml(issuer.bankNumber || "")}</div>
+          <div>名義：${escapeHtml(issuer.bankHolder || "")}</div>
         </section>
         <section class="spreadsheet-grand-total">
           <span>合　　計</span>
@@ -1537,8 +1544,8 @@ async function exportSpreadsheetInvoice(draft) {
   const items = getInvoiceLineItems(draft);
   const totals = calculateInvoiceTotals(draft, items);
 
-  worksheet.getCell("B3").value = [client.name, getRecipientNameWithHonorific(client.contact)].filter(Boolean).join("　");
-  worksheet.getCell("F3").value = "御中";
+  worksheet.getCell("B3").value = getSuzukiSpreadsheetRecipientName(client);
+  worksheet.getCell("F3").value = "";
   worksheet.getCell("J3").value = new Date(`${draft.issueDate}T12:00:00`);
   worksheet.getCell("J4").value = issuer.registration || "-";
   worksheet.getCell("H6").value = `氏名：${issuer.name || ""}`;
@@ -1559,7 +1566,8 @@ async function exportSpreadsheetInvoice(draft) {
     worksheet.getCell(`H${row}`).value = null;
     worksheet.getCell(`I${row}`).value = null;
     worksheet.getCell(`J${row}`).value = null;
-    worksheet.getCell(`H${row}`).numFmt = "#,##0;-#,##0;;";
+    worksheet.getCell(`G${row}`).numFmt = '"¥"#,##0';
+    worksheet.getCell(`H${row}`).numFmt = '"¥"#,##0';
     worksheet.getCell(`I${row}`).numFmt = "#,##0;-#,##0;;";
   }
 
@@ -1573,14 +1581,31 @@ async function exportSpreadsheetInvoice(draft) {
     worksheet.getCell(`J${row}`).value = item.description || "";
   });
 
+  const bankBranch = [issuer.bankBranch, issuer.branchCode ? `（${issuer.branchCode}）` : ""].filter(Boolean).join("");
+  safeUnmergeCells(worksheet, "B39:E42");
+  worksheet.mergeCells("B39:E39");
+  worksheet.mergeCells("B40:E40");
+  worksheet.mergeCells("B41:E41");
+  worksheet.mergeCells("B42:E42");
   worksheet.getCell("B39").value = "[振込先]";
-  worksheet.getCell("B40").value = "銀行名";
-  worksheet.getCell("C40").value = `${issuer.bankName || ""} ${issuer.bankBranch || ""}`.trim();
-  worksheet.getCell("B41").value = "口座番号";
-  worksheet.getCell("C41").value = `${issuer.bankType || "普通"} ${issuer.bankNumber || ""}`.trim();
-  worksheet.getCell("B42").value = "名義";
-  worksheet.getCell("C42").value = issuer.bankHolder || "";
+  worksheet.getCell("B40").value = `銀行名：${issuer.bankName || ""}　${bankBranch}`;
+  worksheet.getCell("B41").value = `口座番号：${issuer.bankType || "普通預金"}　${issuer.bankNumber || ""}`;
+  worksheet.getCell("B42").value = `名義：${issuer.bankHolder || ""}`;
+  for (let row = 39; row <= 42; row += 1) {
+    for (let col = 2; col <= 5; col += 1) {
+      const cell = worksheet.getCell(row, col);
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF334B63" } },
+        left: { style: "thin", color: { argb: "FF334B63" } },
+        bottom: { style: "thin", color: { argb: "FF334B63" } },
+        right: { style: "thin", color: { argb: "FF334B63" } },
+      };
+      cell.alignment = { ...cell.alignment, horizontal: "left", vertical: "middle" };
+      cell.font = { ...cell.font, name: "Meiryo", size: row === 39 ? 9 : 8, bold: row === 39 };
+    }
+  }
   worksheet.getCell("H39").value = totals.total;
+  worksheet.getCell("H39").numFmt = '"¥"#,##0';
   worksheet.pageSetup.printArea = "B1:J45";
   worksheet.pageSetup.orientation = "portrait";
   worksheet.pageSetup.fitToPage = true;
@@ -1664,6 +1689,35 @@ function mergeById(defaultItems, savedItems) {
   return [...mergedDefaults, ...customItems];
 }
 
+function migrateClients(clients) {
+  return clients.map((client) => {
+    if (client.id === "client-lead-innovation" && client.defaultItemPresetId === "item-office-work-a") {
+      return { ...client, defaultItemPresetId: "item-office-work" };
+    }
+    return client;
+  });
+}
+
+function migrateInvoicePresets(invoicePresets) {
+  return invoicePresets.map((preset) => {
+    if (preset.id === "invoice-2026-06-lead-innovation") {
+      return {
+        ...preset,
+        issueDate: preset.issueDate === "2026-06-10" ? "2026-07-01" : preset.issueDate,
+        itemPresetId: preset.itemPresetId === "item-office-work-a" ? "item-office-work" : preset.itemPresetId,
+        manualItems: Array.isArray(preset.manualItems)
+          ? preset.manualItems.map((item) => (
+            item.id === "preset-202606-lead-a" && item.name === "事務作業A"
+              ? { ...item, name: "事務作業" }
+              : item
+          ))
+          : preset.manualItems,
+      };
+    }
+    return preset;
+  });
+}
+
 function calculateWithholding(amount) {
   const taxableAmount = Math.max(0, Math.floor(Number(amount || 0)));
   if (taxableAmount <= 1000000) return Math.floor(taxableAmount * 0.1021);
@@ -1678,6 +1732,18 @@ function getRecipientNameWithHonorific(value) {
   const name = String(value || "").trim();
   if (!name) return "";
   return name.endsWith("様") ? name : `${name}様`;
+}
+
+function getSuzukiSpreadsheetRecipientName(client) {
+  return getRecipientNameWithHonorific(client?.contact || client?.name || "");
+}
+
+function safeUnmergeCells(worksheet, range) {
+  try {
+    worksheet.unMergeCells(range);
+  } catch (error) {
+    // The template may already be unmerged in some browsers/ExcelJS versions.
+  }
 }
 
 function getIssuer(issuerId) {
